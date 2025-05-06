@@ -1,0 +1,1 @@
+web: cd WhiteBoardApp/bin/publish/; ./WhiteBoardApp --urls http://*:$PORT 

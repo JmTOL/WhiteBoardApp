@@ -1,0 +1,191 @@
+@page
+@using WhiteBoardApp.Models
+@namespace WhiteBoardApp.Pages
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+    ViewData["Title"] = "White Board";
+}
+
+<div class="drawing-container">
+    <div class="toolbar">
+        <div class="tool-group">
+            <button id="drawTool" class="tool-btn active" title="Draw">
+                <i class="fas fa-pen"></i>
+            </button>
+            <button id="eraserTool" class="tool-btn" title="Eraser">
+                <i class="fas fa-eraser"></i>
+            </button>
+            <input type="color" id="colorPicker" value="#000000" title="Color">
+            <div class="brush-size-container">
+                <input type="range" id="brushSize" min="1" max="50" value="5" title="Brush Size">
+                <span id="brushSizeValue">5px</span>
+            </div>
+        </div>
+        <div class="tool-group">
+            <button id="addStickyNote" class="tool-btn" title="Add Sticky Note" onclick="createNewNote()"">
+                <i class="fas fa-sticky-note"></i>
+            </button>
+            <div class="sticker-button-container">
+                <button id="addSticker" class="tool-btn" title="Add Sticker">
+                    <i class="fas fa-smile"></i>
+                </button>
+                <div id="stickerPalette" class="sticker-palette hidden">
+                    <div class="sticker-input-container">
+                        <input type="text" id="stickerInput" class="sticker-input" placeholder="Enter text or emoji...">
+                        <button id="addCustomSticker" class="tool-btn" title="Add Custom Sticker" >
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                    <div class="sticker-suggestions">
+                        <div class="sticker" data-sticker="😊">😊</div>
+                        <div class="sticker" data-sticker="⭐">⭐</div>
+                        <div class="sticker" data-sticker="❤️">❤️</div>
+                        <div class="sticker" data-sticker="🎨">🎨</div>
+                        <div class="sticker" data-sticker="🎮">🎮</div>
+                        <div class="sticker" data-sticker="🚗">🚗</div>
+                        <div class="sticker" data-sticker="🐶">🐶</div>
+                        <div class="sticker" data-sticker="😺">😺</div>
+                        <div class="sticker" data-sticker="🐮">🐮</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="canvas-container">
+        <canvas id="drawingCanvas"></canvas>
+    </div>
+</div>
+
+@section Scripts {
+    <script type="text/javascript" src="/scripts/note.js"></script>
+    <script type="text/javascript" src="/scripts/sticker.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        let connection;
+        let notes = new Map();
+        let stickers = new Map();
+        let isDragging = false;
+        const canvas = document.getElementById('drawingCanvas');
+
+        async function initializeSignalR() {
+            connection = new signalR.HubConnectionBuilder()
+                .withUrl("/noteHub")
+                .withAutomaticReconnect()
+                .build();
+
+            connection.on("ReceiveNote", (note) => {
+                addNoteToUI(note);
+            });
+
+            connection.on("UpdateNote", (note) => {
+                updateNoteInUI(note);
+            });
+
+            connection.on("DeleteNote", (noteId) => {
+                deleteNoteFromUI(noteId);
+            });
+
+            connection.on("MoveNote", (noteId, x, y) => {
+                moveNoteInUI(noteId, x, y);
+            });
+
+            connection.on("ReceiveSticker", (sticker) => {
+                addStickerToUI(sticker);
+            });
+
+            connection.on("ResizeSticker", (stickerId, newSize) => {
+                resizeStickerInUI(stickerId, newSize);
+            });
+
+            try {
+                await connection.start();
+                console.log("SignalR Connected!");
+            } catch (err) {
+                console.error("SignalR Connection Error: ", err);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeSignalR);
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const canvas = document.getElementById('drawingCanvas');
+            const ctx = canvas.getContext('2d');
+            let isDrawing = false;
+            let currentTool = 'draw';
+            let currentColor = '#000000';
+            let brushSize = 5;
+
+            // Set canvas size
+            function resizeCanvas() {
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+            }
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
+
+            // Drawing functions
+            function startDrawing(e) {
+                isDrawing = true;
+                draw(e);
+            }
+
+            function stopDrawing() {
+                isDrawing = false;
+                ctx.beginPath();
+            }
+
+            function draw(e) {
+                if (!isDrawing) return;
+
+                console.log(e);
+
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                ctx.lineWidth = brushSize;
+                ctx.lineCap = 'round';
+                ctx.strokeStyle = currentTool === 'eraser' ? '#ffffff' : currentColor;
+
+                ctx.lineTo(x, y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+            }
+
+            // Event listeners for drawing
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseout', stopDrawing);
+
+            // Tool selection
+            document.getElementById('drawTool').addEventListener('click', () => {
+                currentTool = 'draw';
+                updateToolButtons();
+            });
+
+            document.getElementById('eraserTool').addEventListener('click', () => {
+                currentTool = 'eraser';
+                updateToolButtons();
+            });
+
+            function updateToolButtons() {
+                document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(currentTool + 'Tool').classList.add('active');
+            }
+
+            // Color and brush size
+            document.getElementById('colorPicker').addEventListener('change', (e) => {
+                currentColor = e.target.value;
+            });
+
+            document.getElementById('brushSize').addEventListener('input', (e) => {
+                brushSize = e.target.value;
+                document.getElementById('brushSizeValue').textContent = brushSize + 'px';
+            });
+        });
+    </script>
+} 
