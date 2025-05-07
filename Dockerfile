@@ -19,4 +19,4 @@ RUN dotnet publish "./WhiteBoardApp.csproj" -c $BUILD_CONFIGURATION -o /app/publ
 FROM base AS final
 WORKDIR /app
 COPY --from=build /app/build .
-ENTRYPOINT ["dotnet", "WhiteBoardApp.dll"]
+ENTRYPOINT ["dotnet", "WhiteBoardApp.dll"] 
