@@ -94,6 +94,21 @@ function resizeStickerInUI(id, newSize){
     }
 }
 
+function moveStickerInUI(stickerId, x, y) {
+    const stickerElement = document.getElementById(stickerId);
+    if (stickerElement) {
+        stickerElement.style.left = x + "px";
+        stickerElement.style.top = y + "px";
+        stickerElement.style.transform = "none";
+
+        const sticker = stickers.get(noteId);
+        if (sticker) {
+            sticker.positionX = x;
+            sticker.positionY = y;
+        }
+    }
+}
+
 function makeStickerDraggable(element) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     element.onmousedown = dragMouseDown;

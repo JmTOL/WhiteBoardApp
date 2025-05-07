@@ -31,10 +31,6 @@ function addNoteToUI(note) {
         <div class="note-content" contenteditable="true" onblur="updateNoteContent(${note.id}, this.textContent)">${note.content}</div>
     `;
     
-    const rect = canvas.getBoundingClientRect();
-    stickyNote.style.left = (rect.width / 2 - 125) + 'px';
-    stickyNote.style.top = (rect.height / 2 - 125) + 'px';
-    
     canvas.parentElement.appendChild(stickyNote);
     makeElementDraggable(stickyNote);
     notes.set(note.id, note);

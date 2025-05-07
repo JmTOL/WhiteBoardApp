@@ -99,6 +99,10 @@
                 resizeStickerInUI(stickerId, newSize);
             });
 
+            connection.on("MoveSticker", (stickerId, x, y) => {
+                moveStickerInUI(stickerId, x, y);
+            });
+
             try {
                 await connection.start();
                 console.log("SignalR Connected!");

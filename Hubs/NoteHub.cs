@@ -94,5 +94,10 @@ namespace WhiteBoardApp.Hubs
         {
             await Clients.All.SendAsync("ResizeSticker", stickerId, newSize);
         }
+
+        public async Task MoveSticker(int stickerId, double x, double y)
+        {
+            await Clients.All.SendAsync("MoveSticker", stickerId, x, y);
+        }
     }
 } 
