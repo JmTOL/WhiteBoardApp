@@ -76,7 +76,7 @@ function addStickerToUI(sticker) {
     stickerContainer.style.top = (rect.height / 2) + 'px';
     
     canvas.parentElement.appendChild(stickerContainer);
-    makeStickerDraggable(stickerContainer);
+    makeStickerDraggable(stickerContainer, stickerContent);
     makeStickerResizable(stickerContainer, stickerContent);
     sticker.set(sticker.id, sticker);
 }
@@ -95,11 +95,10 @@ function resizeStickerInUI(id, newSize){
 }
 
 function moveStickerInUI(stickerId, x, y) {
-    const stickerElement = document.getElementById(stickerId);
+    const stickerElement = document.getElementById(stickerId).parentElement;
     if (stickerElement) {
         stickerElement.style.left = x + "px";
         stickerElement.style.top = y + "px";
-        stickerElement.style.transform = "none";
 
         const sticker = stickers.get(noteId);
         if (sticker) {
@@ -109,7 +108,7 @@ function moveStickerInUI(stickerId, x, y) {
     }
 }
 
-function makeStickerDraggable(element) {
+function makeStickerDraggable(element, content) {
     let pos1 = 0, pos2 = 0, pos3 = 0, pos4 = 0;
     element.onmousedown = dragMouseDown;
 
@@ -137,6 +136,10 @@ function makeStickerDraggable(element) {
         element.classList.remove('dragging');
         document.onmouseup = null;
         document.onmousemove = null;
+
+        console.log(element, content, element.offsetTop - pos2, element.offsetLeft - pos1);
+        const stickerId = parseInt(content.id);
+        connection.invoke("MoveSticker", stickerId, element.offsetLeft - pos1, element.offsetTop - pos2);
     }
 }
 
