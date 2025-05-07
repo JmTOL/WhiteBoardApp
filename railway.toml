@@ -1,0 +1,7 @@
+[build]
+builder = "dockerfile"
+dockerfilePath = "./WhiteBoardApp/Dockerfile"
+
+[deploy]
+startCommand = "./WhiteBoardApp"
+restartPolicyType = "always"

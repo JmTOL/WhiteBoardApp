@@ -7,38 +7,27 @@ using Microsoft.AspNetCore.HttpOverrides;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+builder.WebHost.UseUrls($"http://*:{port}");
+
 // Load environment variables from .env file if it exists
 Env.Load();
 
-Console.WriteLine("Warning: REDIS_URL environment variable is not set, falling back to in-memory SignalR.");
 builder.Services.AddSignalR();
-
-
-Console.WriteLine("Warning: DATABASE_URL not found, falling back to SQLite.");
 var fallbackDbPath = Path.Combine(AppContext.BaseDirectory, "local.db");
 var sqliteConnection = $"Data Source={fallbackDbPath}";
 builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(sqliteConnection));
 
 
 builder.Services.AddRazorPages();
-var isHeroku = !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("DYNO"));
+
 builder.Services.Configure<ForwardedHeadersOptions>(options =>
 {
     options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
-    if (isHeroku)
-    {
-        options.KnownNetworks.Clear();
-        options.KnownProxies.Clear();
-    }
 });
 builder.Services.AddHttpsRedirection(options =>
 {
-    if (isHeroku)
-    {
-        options.RedirectStatusCode = StatusCodes.Status308PermanentRedirect;
-        options.HttpsPort = 443;
-    }
-    ;
+
 });
 
 var app = builder.Build();
