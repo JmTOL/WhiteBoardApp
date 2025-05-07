@@ -1,7 +1,6 @@
 using WhiteBoardApp.Hubs;
 using Microsoft.EntityFrameworkCore;
 using WhiteBoardApp.Data;
-using StackExchange.Redis;
 using DotNetEnv;
 using Microsoft.AspNetCore.HttpOverrides;
 
